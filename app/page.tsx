@@ -1,65 +1,145 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Church, Eye, EyeOff, LogIn } from "lucide-react";
+
+export default function LoginPage() {
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    // Mock login — just redirect after a brief delay
+    setTimeout(() => {
+      router.push("/dashboard");
+    }, 800);
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="min-h-screen flex">
+      {/* Left panel — branding */}
+      <div className="hidden lg:flex lg:w-[55%] bg-navy-700 relative overflow-hidden flex-col justify-between p-12 text-white">
+        <div className="absolute inset-0 opacity-[0.04]">
+          <div className="absolute top-20 left-20 w-64 h-64 border border-white/20 rounded-full" />
+          <div className="absolute bottom-40 right-20 w-96 h-96 border border-white/20 rounded-full" />
+          <div className="absolute top-1/2 left-1/3 w-48 h-48 border border-white/10 rounded-full" />
+        </div>
+
+        <div className="relative z-10">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
+              <Church className="w-6 h-6 text-white" />
+            </div>
+            <span className="text-lg font-semibold tracking-tight">Ministries</span>
+          </div>
+          <p className="text-white/50 text-sm">STEWARDSHIP PORTAL</p>
+        </div>
+
+        <div className="relative z-10 max-w-md">
+          <h1 className="text-4xl font-bold leading-tight mb-4">
+            Manage your teams.<br />
+            Track attendance.<br />
+            Build community.
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="text-white/60 text-lg leading-relaxed">
+            A simple, powerful tool for The New Church, Ibadan — keeping every service team connected and accountable.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        <div className="relative z-10 text-white/40 text-sm">
+          © 2026 The New Church, Ibadan
         </div>
-      </main>
+      </div>
+
+      {/* Right panel — login form */}
+      <div className="flex-1 flex items-center justify-center p-8 bg-surface">
+        <div className="w-full max-w-md">
+          {/* Mobile branding */}
+          <div className="lg:hidden flex items-center gap-3 mb-10">
+            <div className="w-10 h-10 bg-navy-700 rounded-xl flex items-center justify-center">
+              <Church className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <span className="text-lg font-semibold text-navy-700">Ministries</span>
+              <p className="text-xs text-navy-400">STEWARDSHIP PORTAL</p>
+            </div>
+          </div>
+
+          <h2 className="text-2xl font-bold text-navy-800 mb-1">Welcome back</h2>
+          <p className="text-navy-400 mb-8">Sign in to your stewardship account</p>
+
+          <form onSubmit={handleLogin} className="space-y-5">
+            <div>
+              <label className="block text-sm font-medium text-navy-600 mb-1.5">
+                Email address
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="admin@thenewchurch.org"
+                className="w-full px-4 py-3 rounded-xl border border-navy-100 bg-white text-navy-800 placeholder:text-navy-300 focus:outline-none focus:ring-2 focus:ring-navy-500/20 focus:border-navy-400 transition-all"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-navy-600 mb-1.5">
+                Password
+              </label>
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter your password"
+                  className="w-full px-4 py-3 rounded-xl border border-navy-100 bg-white text-navy-800 placeholder:text-navy-300 focus:outline-none focus:ring-2 focus:ring-navy-500/20 focus:border-navy-400 transition-all pr-12"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-navy-300 hover:text-navy-500 transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" className="w-4 h-4 rounded border-navy-200 text-navy-700 focus:ring-navy-500" />
+                <span className="text-sm text-navy-500">Remember me</span>
+              </label>
+              <button type="button" className="text-sm text-navy-600 hover:text-navy-800 font-medium transition-colors">
+                Forgot password?
+              </button>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 px-4 bg-navy-700 hover:bg-navy-800 text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-70"
+            >
+              {loading ? (
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <>
+                  <LogIn className="w-5 h-5" />
+                  Sign In
+                </>
+              )}
+            </button>
+          </form>
+
+          <p className="text-center text-sm text-navy-400 mt-8">
+            Need access? Contact your campus administrator
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
