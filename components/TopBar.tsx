@@ -1,17 +1,23 @@
 "use client";
 
-import { Bell, Settings, Search } from "lucide-react";
+import { Bell, Settings, Search, Menu } from "lucide-react";
 
-export default function TopBar() {
+export default function TopBar({ onMenuClick }: { onMenuClick: () => void }) {
   return (
-    <header className="h-16 bg-white border-b border-navy-100 flex items-center justify-between px-8 sticky top-0 z-30">
-      <div className="flex items-center gap-4">
-        <div className="relative">
+    <header className="h-14 lg:h-16 bg-white border-b border-navy-100 flex items-center justify-between px-4 lg:px-8 sticky top-0 z-30">
+      <div className="flex items-center gap-3">
+        <button
+          onClick={onMenuClick}
+          className="lg:hidden w-9 h-9 rounded-xl bg-navy-50 flex items-center justify-center text-navy-500 hover:bg-navy-100"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+        <div className="relative hidden sm:block">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-navy-300" />
           <input
             type="text"
             placeholder="Search members, teams..."
-            className="pl-10 pr-4 py-2 w-72 rounded-xl bg-navy-50 border-none text-sm text-navy-700 placeholder:text-navy-300 focus:outline-none focus:ring-2 focus:ring-navy-200 transition-all"
+            className="pl-10 pr-4 py-2 w-48 lg:w-72 rounded-xl bg-navy-50 border-none text-sm text-navy-700 placeholder:text-navy-300 focus:outline-none focus:ring-2 focus:ring-navy-200 transition-all"
           />
         </div>
       </div>
@@ -27,7 +33,7 @@ export default function TopBar() {
         <div className="w-px h-6 bg-navy-100 mx-1" />
         <div className="flex items-center gap-2">
           <div className="w-9 h-9 bg-navy-700 rounded-full flex items-center justify-center text-white text-sm font-semibold">
-            AD
+            OK
           </div>
         </div>
       </div>

@@ -11,12 +11,23 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const [error, setError] = useState("");
+
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
     setLoading(true);
-    // Mock login — just redirect after a brief delay
+
     setTimeout(() => {
-      router.push("/dashboard");
+      if (
+        email === "admin@thenewibadan.com" &&
+        password === "thenewibadan"
+      ) {
+        router.push("/dashboard");
+      } else {
+        setError("Invalid email or password. Please try again.");
+        setLoading(false);
+      }
     }, 800);
   };
 
@@ -72,6 +83,12 @@ export default function LoginPage() {
 
           <h2 className="text-2xl font-bold text-navy-800 mb-1">Welcome back</h2>
           <p className="text-navy-400 mb-8">Sign in to your stewardship account</p>
+
+          {error && (
+            <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-sm text-red-600 font-medium">
+              {error}
+            </div>
+          )}
 
           <form onSubmit={handleLogin} className="space-y-5">
             <div>

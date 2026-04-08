@@ -27,34 +27,34 @@ export default function DashboardPage() {
   return (
     <div className="max-w-350 mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 lg:mb-8">
         <div>
           <p className="text-xs font-semibold text-navy-400 tracking-wider uppercase mb-1">
             IBADAN CAMPUS
           </p>
-          <h1 className="text-2xl font-bold text-navy-800">
+          <h1 className="text-xl lg:text-2xl font-bold text-navy-800">
             The New Church Dashboard
           </h1>
         </div>
         <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-navy-200 rounded-xl text-sm font-medium text-navy-600 hover:bg-navy-50 transition-all">
+          <button className="flex items-center gap-2 px-3 lg:px-4 py-2 lg:py-2.5 bg-white border border-navy-200 rounded-xl text-sm font-medium text-navy-600 hover:bg-navy-50 transition-all">
             <Download className="w-4 h-4" />
-            Monthly Report
+            <span className="hidden sm:inline">Monthly Report</span>
           </button>
           <Link
             href="/dashboard/members"
-            className="flex items-center gap-2 px-4 py-2.5 bg-navy-700 rounded-xl text-sm font-medium text-white hover:bg-navy-800 transition-all"
+            className="flex items-center gap-2 px-3 lg:px-4 py-2 lg:py-2.5 bg-navy-700 rounded-xl text-sm font-medium text-white hover:bg-navy-800 transition-all"
           >
             <Plus className="w-4 h-4" />
-            Add New Member
+            <span className="hidden sm:inline">Add New Member</span>
           </Link>
         </div>
       </div>
 
-      <div className="flex gap-8">
+      <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
         {/* Main content — team cards grid */}
         <div className="flex-1 min-w-0">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {teams.map((team) => {
               const memberCount = getTeamMembers(team.id).length;
               const attendance = getTeamAttendance(team.id);
@@ -120,7 +120,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Right sidebar */}
-        <div className="w-75 shrink-0 space-y-6">
+        <div className="w-full lg:w-75 shrink-0 space-y-6">
           {/* Quick Actions */}
           <div className="bg-white rounded-2xl border border-navy-100/60 p-5">
             <h3 className="text-sm font-bold text-navy-700 mb-4 flex items-center gap-2">

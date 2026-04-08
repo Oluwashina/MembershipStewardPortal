@@ -125,9 +125,9 @@ export default function AttendancePage() {
   return (
     <div className="max-w-275 mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-navy-800">
+          <h1 className="text-xl lg:text-2xl font-bold text-navy-800">
             Mark Attendance
           </h1>
           <p className="text-sm text-navy-400 mt-1">
@@ -157,7 +157,7 @@ export default function AttendancePage() {
       </div>
 
       {/* Selectors */}
-      <div className="flex items-center gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mb-6">
         <div className="relative">
           <select
             value={selectedTeam}
@@ -190,7 +190,7 @@ export default function AttendancePage() {
       </div>
 
       {/* Summary bar */}
-      <div className="flex items-center gap-6 mb-6 bg-white rounded-2xl border border-navy-100/60 p-4">
+      <div className="flex flex-wrap items-center gap-4 lg:gap-6 mb-6 bg-white rounded-2xl border border-navy-100/60 p-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-navy-50 rounded-xl flex items-center justify-center">
             <TeamIcon
@@ -205,8 +205,8 @@ export default function AttendancePage() {
             <p className="text-xs text-navy-400">{currentTeam?.description}</p>
           </div>
         </div>
-        <div className="w-px h-8 bg-navy-100" />
-        <div className="flex items-center gap-2">
+        <div className="w-px h-8 bg-navy-100 hidden sm:block" />
+        <div className="hidden sm:flex items-center gap-2">
           <CalendarDays className="w-4 h-4 text-navy-400" />
           <span className="text-sm font-medium text-navy-600">
             {formatSunday(selectedSunday)}
@@ -243,16 +243,17 @@ export default function AttendancePage() {
 
       {/* Attendance list */}
       <div className="bg-white rounded-2xl border border-navy-100/60 overflow-hidden">
-        <table className="w-full">
+        <div className="overflow-x-auto">
+        <table className="w-full min-w-[500px]">
           <thead>
             <tr className="border-b border-navy-100">
-              <th className="text-left px-6 py-3.5 text-xs font-semibold text-navy-400 tracking-wider uppercase">
+              <th className="text-left px-4 lg:px-6 py-3.5 text-xs font-semibold text-navy-400 tracking-wider uppercase">
                 Member
               </th>
-              <th className="text-center px-6 py-3.5 text-xs font-semibold text-navy-400 tracking-wider uppercase">
+              <th className="text-center px-4 lg:px-6 py-3.5 text-xs font-semibold text-navy-400 tracking-wider uppercase">
                 Status
               </th>
-              <th className="text-left px-6 py-3.5 text-xs font-semibold text-navy-400 tracking-wider uppercase">
+              <th className="text-left px-4 lg:px-6 py-3.5 text-xs font-semibold text-navy-400 tracking-wider uppercase">
                 Reason (if absent)
               </th>
             </tr>
@@ -269,7 +270,7 @@ export default function AttendancePage() {
                   key={member.id}
                   className="border-b border-navy-50 last:border-none"
                 >
-                  <td className="px-6 py-3.5">
+                  <td className="px-4 lg:px-6 py-3.5">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 bg-navy-100 rounded-full flex items-center justify-center text-navy-600 text-xs font-semibold">
                         {member.name
@@ -287,7 +288,7 @@ export default function AttendancePage() {
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-3.5">
+                  <td className="px-4 lg:px-6 py-3.5">
                     <div className="flex justify-center">
                       <button
                         onClick={() => toggleAttendance(member.id)}
@@ -305,7 +306,7 @@ export default function AttendancePage() {
                       </button>
                     </div>
                   </td>
-                  <td className="px-6 py-3.5">
+                  <td className="px-4 lg:px-6 py-3.5">
                     {!record.present ? (
                       editingReason === member.id ? (
                         <div className="flex items-center gap-2">
@@ -342,6 +343,7 @@ export default function AttendancePage() {
             })}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );

@@ -58,9 +58,9 @@ function MembersContent() {
   return (
     <div className="max-w-350 mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-navy-800">Team Members</h1>
+          <h1 className="text-xl lg:text-2xl font-bold text-navy-800">Team Members</h1>
           <p className="text-sm text-navy-400 mt-1">
             {filteredMembers.length} members
             {selectedTeam !== "all" &&
@@ -77,7 +77,7 @@ function MembersContent() {
       </div>
 
       {/* Filters */}
-      <div className="flex items-center gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mb-6">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-navy-300" />
           <input
@@ -133,8 +133,42 @@ function MembersContent() {
         ))}
       </div>
 
-      {/* Members table */}
-      <div className="bg-white rounded-2xl border border-navy-100/60 overflow-hidden">
+      {/* Members — card list on mobile, table on desktop */}
+      {/* Mobile cards */}
+      <div className="space-y-3 md:hidden">
+        {filteredMembers.map((member) => {
+          const team = teams.find((t) => t.id === member.teamId);
+          const bday = new Date(member.birthday);
+          return (
+            <div
+              key={member.id}
+              onClick={() => setSelectedMember(member.id)}
+              className="bg-white rounded-xl border border-navy-100/60 p-4 active:bg-navy-50 cursor-pointer"
+            >
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-9 h-9 bg-navy-100 rounded-full flex items-center justify-center text-navy-600 text-xs font-semibold shrink-0">
+                  {member.name.split(" ").map((n) => n[0]).join("")}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-navy-700 truncate">{member.name}</p>
+                  <span className="inline-flex items-center gap-1 text-[11px] font-medium text-navy-500 bg-navy-50 px-2 py-0.5 rounded-md">
+                    <TeamIcon name={team?.icon || ""} className="w-3 h-3" />
+                    {team?.name}
+                  </span>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-2 text-xs text-navy-500">
+                <div><span className="text-navy-400">Phone:</span> {member.phone}</div>
+                <div><span className="text-navy-400">Location:</span> {member.location}</div>
+                <div><span className="text-navy-400">Birthday:</span> {bday.toLocaleDateString("en-US", { month: "short", day: "numeric" })}</div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Desktop table */}
+      <div className="bg-white rounded-2xl border border-navy-100/60 overflow-hidden hidden md:block">
         <table className="w-full">
           <thead>
             <tr className="border-b border-navy-100">
@@ -217,7 +251,7 @@ function MembersContent() {
             className="absolute inset-0 bg-navy-900/30 backdrop-blur-sm"
             onClick={() => setSelectedMember(null)}
           />
-          <div className="relative w-105 bg-white h-full shadow-2xl overflow-auto">
+          <div className="relative w-full sm:w-105 bg-white h-full shadow-2xl overflow-auto">
             <div className="p-6">
               <button
                 onClick={() => setSelectedMember(null)}
@@ -294,7 +328,7 @@ function MembersContent() {
             className="absolute inset-0 bg-navy-900/30 backdrop-blur-sm"
             onClick={() => setShowAddModal(false)}
           />
-          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6">
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 sm:mx-auto p-5 sm:p-6">
             <button
               onClick={() => setShowAddModal(false)}
               className="absolute top-4 right-4 w-8 h-8 rounded-lg bg-navy-50 flex items-center justify-center text-navy-400 hover:bg-navy-100 transition-all"

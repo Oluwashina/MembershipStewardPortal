@@ -164,7 +164,7 @@ export default function ReportsPage() {
       </div>
 
       {/* Overview cards */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div className="bg-white rounded-2xl border border-navy-100/60 p-5">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-9 h-9 bg-navy-50 rounded-xl flex items-center justify-center">
@@ -225,9 +225,9 @@ export default function ReportsPage() {
         </div>
       </div>
 
-      <div className="flex gap-6">
+      <div className="flex flex-col lg:flex-row gap-6">
         {/* Team breakdown */}
-        <div className="flex-1 space-y-4">
+        <div className="flex-1 min-w-0 space-y-4">
           <h2 className="text-base font-bold text-navy-700 flex items-center gap-2">
             <BarChart3 className="w-4 h-4" />
             Team Breakdown — {monthLabel}
@@ -271,7 +271,7 @@ export default function ReportsPage() {
 
               {/* Weekly breakdown */}
               {report.sundayBreakdown.length > 0 ? (
-                <div className="grid grid-cols-5 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
                   {report.sundayBreakdown.map((week) => {
                     const total = week.present + week.absent;
                     const pct =
@@ -319,7 +319,7 @@ export default function ReportsPage() {
         </div>
 
         {/* Sidebar — members needing attention */}
-        <div className="w-[320px] shrink-0">
+        <div className="w-full lg:w-[320px] shrink-0">
           <h2 className="text-base font-bold text-navy-700 flex items-center gap-2 mb-4">
             <AlertCircle className="w-4 h-4" />
             Most Absent — {monthLabel}
