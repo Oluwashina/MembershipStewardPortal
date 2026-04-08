@@ -161,6 +161,12 @@ export function getSundays(): string[] {
   return sundays;
 }
 
+// Simple deterministic hash for consistent SSR/client data
+function seededRandom(seed: number): number {
+  const x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+}
+
 // Generate mock attendance data
 export function generateMockAttendance(): AttendanceRecord[] {
   const records: AttendanceRecord[] = [];
@@ -178,16 +184,18 @@ export function generateMockAttendance(): AttendanceRecord[] {
     "Out of state",
   ];
 
+  let seed = 1;
   for (const member of members) {
     for (const sunday of pastSundays) {
-      const present = Math.random() > 0.15; // ~85% attendance
+      const rand = seededRandom(seed++);
+      const present = rand > 0.15; // ~85% attendance
       records.push({
         memberId: member.id,
         date: sunday,
         present,
         reason: present
           ? undefined
-          : reasons[Math.floor(Math.random() * reasons.length)],
+          : reasons[Math.floor(seededRandom(seed++) * reasons.length)],
       });
     }
   }

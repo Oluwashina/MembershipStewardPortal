@@ -18,11 +18,11 @@ export default function TopBar() {
 
       <div className="flex items-center gap-3">
         <button className="w-9 h-9 rounded-xl bg-navy-50 flex items-center justify-center text-navy-400 hover:bg-navy-100 hover:text-navy-600 transition-all relative">
-          <Bell className="w-[18px] h-[18px]" />
+          <Bell className="w-4.5 h-4.5" />
           <div className="absolute top-1.5 right-1.5 w-2 h-2 bg-accent-red rounded-full" />
         </button>
         <button className="w-9 h-9 rounded-xl bg-navy-50 flex items-center justify-center text-navy-400 hover:bg-navy-100 hover:text-navy-600 transition-all">
-          <Settings className="w-[18px] h-[18px]" />
+          <Settings className="w-4.5 h-4.5" />
         </button>
         <div className="w-px h-6 bg-navy-100 mx-1" />
         <div className="flex items-center gap-2">

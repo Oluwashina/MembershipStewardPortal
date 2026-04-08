@@ -25,7 +25,7 @@ export default function DashboardPage() {
   const totalMembers = members.length;
 
   return (
-    <div className="max-w-[1400px] mx-auto">
+    <div className="max-w-350 mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
@@ -120,7 +120,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Right sidebar */}
-        <div className="w-[300px] flex-shrink-0 space-y-6">
+        <div className="w-75 shrink-0 space-y-6">
           {/* Quick Actions */}
           <div className="bg-white rounded-2xl border border-navy-100/60 p-5">
             <h3 className="text-sm font-bold text-navy-700 mb-4 flex items-center gap-2">
@@ -210,7 +210,7 @@ export default function DashboardPage() {
 
                 return (
                   <div key={member.id} className="flex items-center gap-3">
-                    <div className="w-9 h-9 bg-navy-700 rounded-full flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
+                    <div className="w-9 h-9 bg-navy-700 rounded-full flex items-center justify-center text-white text-xs font-semibold shrink-0">
                       {member.name.split(" ").map((n) => n[0]).join("")}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -231,7 +231,7 @@ export default function DashboardPage() {
                         </span>
                       </p>
                     </div>
-                    <Cake className="w-4 h-4 text-navy-300 flex-shrink-0" />
+                    <Cake className="w-4 h-4 text-navy-300 shrink-0" />
                   </div>
                 );
               })}

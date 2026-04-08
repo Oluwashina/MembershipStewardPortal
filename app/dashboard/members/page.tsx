@@ -56,7 +56,7 @@ function MembersContent() {
     : null;
 
   return (
-    <div className="max-w-[1400px] mx-auto">
+    <div className="max-w-350 mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -168,7 +168,7 @@ function MembersContent() {
                 >
                   <td className="px-6 py-3.5">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-navy-100 rounded-full flex items-center justify-center text-navy-600 text-xs font-semibold flex-shrink-0">
+                      <div className="w-8 h-8 bg-navy-100 rounded-full flex items-center justify-center text-navy-600 text-xs font-semibold shrink-0">
                         {member.name
                           .split(" ")
                           .map((n) => n[0])
@@ -217,7 +217,7 @@ function MembersContent() {
             className="absolute inset-0 bg-navy-900/30 backdrop-blur-sm"
             onClick={() => setSelectedMember(null)}
           />
-          <div className="relative w-[420px] bg-white h-full shadow-2xl overflow-auto">
+          <div className="relative w-105 bg-white h-full shadow-2xl overflow-auto">
             <div className="p-6">
               <button
                 onClick={() => setSelectedMember(null)}

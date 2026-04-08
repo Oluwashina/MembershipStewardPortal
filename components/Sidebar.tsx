@@ -22,7 +22,7 @@ export default function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="w-[250px] bg-white border-r border-navy-100 flex flex-col h-screen sticky top-0">
+    <aside className="w-62.5 bg-white border-r border-navy-100 flex flex-col h-screen sticky top-0">
       {/* Branding */}
       <div className="p-6 pb-4">
         <div className="flex items-center gap-3 mb-1">
@@ -54,7 +54,7 @@ export default function Sidebar() {
                   : "text-navy-500 hover:bg-navy-50 hover:text-navy-700"
               }`}
             >
-              <Icon className="w-[18px] h-[18px]" />
+              <Icon className="w-4.5 h-4.5" />
               {item.label}
               {isActive && (
                 <div className="ml-auto w-1.5 h-1.5 bg-white rounded-full" />
@@ -70,7 +70,7 @@ export default function Sidebar() {
           href="/"
           className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-navy-400 hover:bg-red-50 hover:text-red-500 transition-all"
         >
-          <LogOut className="w-[18px] h-[18px]" />
+          <LogOut className="w-4.5 h-4.5" />
           Sign Out
         </Link>
       </div>

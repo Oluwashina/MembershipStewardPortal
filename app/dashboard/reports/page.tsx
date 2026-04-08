@@ -119,7 +119,7 @@ export default function ReportsPage() {
   }, [teamsToShow, selectedMonth]);
 
   return (
-    <div className="max-w-[1400px] mx-auto">
+    <div className="max-w-350 mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -319,7 +319,7 @@ export default function ReportsPage() {
         </div>
 
         {/* Sidebar — members needing attention */}
-        <div className="w-[320px] flex-shrink-0">
+        <div className="w-[320px] shrink-0">
           <h2 className="text-base font-bold text-navy-700 flex items-center gap-2 mb-4">
             <AlertCircle className="w-4 h-4" />
             Most Absent — {monthLabel}
@@ -339,7 +339,7 @@ export default function ReportsPage() {
                     key={member.id}
                     className="flex items-center gap-3 p-3 bg-navy-50 rounded-xl"
                   >
-                    <div className="w-8 h-8 bg-navy-200 rounded-full flex items-center justify-center text-navy-600 text-xs font-semibold flex-shrink-0">
+                    <div className="w-8 h-8 bg-navy-200 rounded-full flex items-center justify-center text-navy-600 text-xs font-semibold shrink-0">
                       {member.name
                         .split(" ")
                         .map((n) => n[0])
@@ -353,7 +353,7 @@ export default function ReportsPage() {
                         {member.teamName}
                       </p>
                     </div>
-                    <div className="text-right flex-shrink-0">
+                    <div className="text-right shrink-0">
                       <p className="text-sm font-bold text-accent-red">
                         {member.absences}
                       </p>

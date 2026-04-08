@@ -123,7 +123,7 @@ export default function AttendancePage() {
   const isFuture = (dateStr: string) => new Date(dateStr) > today;
 
   return (
-    <div className="max-w-[1100px] mx-auto">
+    <div className="max-w-275 mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
