@@ -93,10 +93,6 @@ export default function DashboardPage() {
           </h1>
         </div>
         <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 px-3 lg:px-4 py-2 lg:py-2.5 bg-white border border-navy-200 rounded-xl text-sm font-medium text-navy-600 hover:bg-navy-50 transition-all">
-            <Download className="w-4 h-4" />
-            <span className="hidden sm:inline">Monthly Report</span>
-          </button>
           <Link
             href="/dashboard/members"
             className="flex items-center gap-2 px-3 lg:px-4 py-2 lg:py-2.5 bg-navy-700 rounded-xl text-sm font-medium text-white hover:bg-navy-800 transition-all"
