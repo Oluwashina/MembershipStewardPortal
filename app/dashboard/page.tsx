@@ -1,12 +1,9 @@
 "use client";
 
-import {
-  teams,
-  getTeamMembers,
-  getTeamAttendance,
-  getUpcomingBirthdays,
-  members,
-} from "@/lib/mock-data";
+import { useState, useEffect, useMemo } from "react";
+import { supabase } from "@/lib/supabase";
+import { Team, Member, AttendanceRecord } from "@/lib/types";
+import { getInitials } from "@/lib/helpers";
 import TeamIcon from "@/components/TeamIcon";
 import {
   UserPlus,
@@ -17,12 +14,71 @@ import {
   Cake,
   Plus,
   Download,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
 
 export default function DashboardPage() {
-  const upcomingBirthdays = getUpcomingBirthdays().slice(0, 4);
-  const totalMembers = members.length;
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
+  const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      const [teamsRes, membersRes, attendanceRes] = await Promise.all([
+        supabase.from("teams").select("*"),
+        supabase.from("members").select("*"),
+        supabase.from("attendance_records").select("*"),
+      ]);
+      setTeams(teamsRes.data || []);
+      setMembers(membersRes.data || []);
+      setAttendance(attendanceRes.data || []);
+      setLoading(false);
+    }
+    fetchData();
+  }, []);
+
+  const getTeamMembers = (teamId: string) =>
+    members.filter((m) => m.team_id === teamId);
+
+  const getTeamAttendance = (teamId: string): number => {
+    const teamMemberIds = new Set(getTeamMembers(teamId).map((m) => m.id));
+    const teamRecords = attendance.filter((r) => teamMemberIds.has(r.member_id));
+    if (teamRecords.length === 0) return 0;
+    const presentCount = teamRecords.filter((r) => r.present).length;
+    return Math.round((presentCount / teamRecords.length) * 100);
+  };
+
+  const upcomingBirthdays = useMemo(() => {
+    const today = new Date();
+    const results: (Member & { daysUntil: number })[] = [];
+
+    for (const member of members) {
+      const bday = new Date(member.birthday + "T00:00:00");
+      const thisYearBday = new Date(
+        today.getFullYear(),
+        bday.getMonth(),
+        bday.getDate()
+      );
+      const diffTime = thisYearBday.getTime() - today.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays >= 0 && diffDays <= 30) {
+        results.push({ ...member, daysUntil: diffDays });
+      }
+    }
+
+    return results.sort((a, b) => a.daysUntil - b.daysUntil).slice(0, 4);
+  }, [members]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-6 h-6 text-navy-400 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-350 mx-auto">
@@ -72,12 +128,12 @@ export default function DashboardPage() {
                         className="w-5 h-5 text-navy-600"
                       />
                     </div>
-                    {team.badgeLabel && (
+                    {team.badge_label && (
                       <span
                         className="text-[10px] font-bold tracking-wider px-2.5 py-1 rounded-full text-white"
-                        style={{ backgroundColor: team.badgeColor }}
+                        style={{ backgroundColor: team.badge_color || "#1B2559" }}
                       >
-                        {team.badgeLabel}
+                        {team.badge_label}
                       </span>
                     )}
                   </div>
@@ -196,7 +252,7 @@ export default function DashboardPage() {
             </div>
             <div className="space-y-3">
               {upcomingBirthdays.map((member) => {
-                const team = teams.find((t) => t.id === member.teamId);
+                const team = teams.find((t) => t.id === member.team_id);
                 const bdayDate = new Date(member.birthday);
                 const displayDate =
                   member.daysUntil === 0
@@ -211,7 +267,7 @@ export default function DashboardPage() {
                 return (
                   <div key={member.id} className="flex items-center gap-3">
                     <div className="w-9 h-9 bg-navy-700 rounded-full flex items-center justify-center text-white text-xs font-semibold shrink-0">
-                      {member.name.split(" ").map((n) => n[0]).join("")}
+                      {getInitials(member.name)}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-navy-700 truncate">
@@ -248,7 +304,7 @@ export default function DashboardPage() {
             <p className="text-sm font-semibold text-white/80 mb-2">
               Total Membership
             </p>
-            <p className="text-4xl font-bold mb-2">{totalMembers}</p>
+            <p className="text-4xl font-bold mb-2">{members.length}</p>
             <div className="flex items-center gap-1.5 text-accent-green text-xs font-medium">
               <TrendingUp className="w-3.5 h-3.5" />
               +12.4% from last quarter

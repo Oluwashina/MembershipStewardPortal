@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 import {
   LayoutDashboard,
   Users,
@@ -27,6 +28,12 @@ export default function Sidebar({
   onClose: () => void;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    router.replace("/");
+  };
 
   return (
     <>
@@ -92,13 +99,13 @@ export default function Sidebar({
 
         {/* Bottom section */}
         <div className="p-3 border-t border-navy-100">
-          <Link
-            href="/"
-            className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-navy-400 hover:bg-red-50 hover:text-red-500 transition-all"
+          <button
+            onClick={handleSignOut}
+            className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-navy-400 hover:bg-red-50 hover:text-red-500 transition-all w-full"
           >
             <LogOut className="w-4.5 h-4.5" />
             Sign Out
-          </Link>
+          </button>
         </div>
       </aside>
     </>

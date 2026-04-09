@@ -1,12 +1,10 @@
 "use client";
 
-import { Suspense, useState, useMemo } from "react";
+import { Suspense, useState, useEffect, useMemo, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
-import {
-  teams,
-  members,
-  getTeamMembers,
-} from "@/lib/mock-data";
+import { supabase } from "@/lib/supabase";
+import { Team, Member } from "@/lib/types";
+import { getInitials } from "@/lib/helpers";
 import TeamIcon from "@/components/TeamIcon";
 import {
   Search,
@@ -17,6 +15,8 @@ import {
   ChevronDown,
   X,
   User,
+  Loader2,
+  Trash2,
 } from "lucide-react";
 
 export default function MembersPage() {
@@ -31,10 +31,47 @@ function MembersContent() {
   const searchParams = useSearchParams();
   const initialTeam = searchParams.get("team") || "all";
 
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedTeam, setSelectedTeam] = useState(initialTeam);
   const [searchQuery, setSearchQuery] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedMember, setSelectedMember] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  // Add member form state
+  const [formName, setFormName] = useState("");
+  const [formTeam, setFormTeam] = useState("");
+  const [formPhone, setFormPhone] = useState("");
+  const [formBirthday, setFormBirthday] = useState("");
+  const [formAddress, setFormAddress] = useState("");
+  const [formLocation, setFormLocation] = useState("");
+
+  const fetchData = useCallback(async () => {
+    const [teamsRes, membersRes] = await Promise.all([
+      supabase.from("teams").select("*"),
+      supabase.from("members").select("*"),
+    ]);
+    setTeams(teamsRes.data || []);
+    setMembers(membersRes.data || []);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // Set default form team when teams load
+  useEffect(() => {
+    if (teams.length > 0 && !formTeam) {
+      setFormTeam(teams[0].id);
+    }
+  }, [teams, formTeam]);
+
+  const getTeamMembers = (teamId: string) =>
+    members.filter((m) => m.team_id === teamId);
 
   const filteredMembers = useMemo(() => {
     let list =
@@ -49,11 +86,56 @@ function MembersContent() {
       );
     }
     return list;
-  }, [selectedTeam, searchQuery]);
+  }, [selectedTeam, searchQuery, members]);
 
   const activeMember = selectedMember
     ? members.find((m) => m.id === selectedMember)
     : null;
+
+  const handleAddMember = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formName.trim() || !formTeam) return;
+    setSubmitting(true);
+
+    const { error } = await supabase.from("members").insert({
+      name: formName.trim(),
+      team_id: formTeam,
+      phone: formPhone.trim(),
+      birthday: formBirthday,
+      address: formAddress.trim(),
+      location: formLocation.trim(),
+    });
+
+    if (!error) {
+      setShowAddModal(false);
+      setFormName("");
+      setFormPhone("");
+      setFormBirthday("");
+      setFormAddress("");
+      setFormLocation("");
+      await fetchData();
+    }
+    setSubmitting(false);
+  };
+
+  const handleDeleteMember = async (memberId: string) => {
+    setDeleting(true);
+    await supabase.from("attendance_records").delete().eq("member_id", memberId);
+    const { error } = await supabase.from("members").delete().eq("id", memberId);
+    if (!error) {
+      setSelectedMember(null);
+      await fetchData();
+    }
+    setDeleting(false);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-6 h-6 text-navy-400 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-350 mx-auto">
@@ -137,8 +219,8 @@ function MembersContent() {
       {/* Mobile cards */}
       <div className="space-y-3 md:hidden">
         {filteredMembers.map((member) => {
-          const team = teams.find((t) => t.id === member.teamId);
-          const bday = new Date(member.birthday);
+          const team = teams.find((t) => t.id === member.team_id);
+          const bday = new Date(member.birthday + "T00:00:00");
           return (
             <div
               key={member.id}
@@ -147,7 +229,7 @@ function MembersContent() {
             >
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-9 h-9 bg-navy-100 rounded-full flex items-center justify-center text-navy-600 text-xs font-semibold shrink-0">
-                  {member.name.split(" ").map((n) => n[0]).join("")}
+                  {getInitials(member.name)}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-navy-700 truncate">{member.name}</p>
@@ -191,8 +273,8 @@ function MembersContent() {
           </thead>
           <tbody>
             {filteredMembers.map((member) => {
-              const team = teams.find((t) => t.id === member.teamId);
-              const bday = new Date(member.birthday);
+              const team = teams.find((t) => t.id === member.team_id);
+              const bday = new Date(member.birthday + "T00:00:00");
 
               return (
                 <tr
@@ -203,10 +285,7 @@ function MembersContent() {
                   <td className="px-6 py-3.5">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 bg-navy-100 rounded-full flex items-center justify-center text-navy-600 text-xs font-semibold shrink-0">
-                        {member.name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")}
+                        {getInitials(member.name)}
                       </div>
                       <span className="text-sm font-semibold text-navy-700">
                         {member.name}
@@ -262,16 +341,13 @@ function MembersContent() {
 
               <div className="text-center mb-6">
                 <div className="w-16 h-16 bg-navy-700 rounded-full flex items-center justify-center text-white text-xl font-bold mx-auto mb-3">
-                  {activeMember.name
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")}
+                  {getInitials(activeMember.name)}
                 </div>
                 <h2 className="text-lg font-bold text-navy-800">
                   {activeMember.name}
                 </h2>
                 <p className="text-sm text-navy-400">
-                  {teams.find((t) => t.id === activeMember.teamId)?.name}
+                  {teams.find((t) => t.id === activeMember.team_id)?.name}
                 </p>
               </div>
 
@@ -286,7 +362,7 @@ function MembersContent() {
                   </div>
                 </div>
                 <div className="flex items-center gap-3 p-3 bg-navy-50 rounded-xl">
-                  <MapPin className="w-4 h-4 text-navy-400" />
+                  <MapPin className="w-4 h-4 text-navy-400 shrink-0" />
                   <div>
                     <p className="text-xs text-navy-400">Address</p>
                     <p className="text-sm font-medium text-navy-700">
@@ -308,7 +384,7 @@ function MembersContent() {
                   <div>
                     <p className="text-xs text-navy-400">Birthday</p>
                     <p className="text-sm font-medium text-navy-700">
-                      {new Date(activeMember.birthday).toLocaleDateString(
+                      {new Date(activeMember.birthday + "T00:00:00").toLocaleDateString(
                         "en-US",
                         { month: "long", day: "numeric", year: "numeric" }
                       )}
@@ -316,6 +392,19 @@ function MembersContent() {
                   </div>
                 </div>
               </div>
+
+              <button
+                onClick={() => handleDeleteMember(activeMember.id)}
+                disabled={deleting}
+                className="mt-6 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-red-200 text-red-500 text-sm font-medium hover:bg-red-50 transition-all disabled:opacity-50"
+              >
+                {deleting ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Trash2 className="w-4 h-4" />
+                )}
+                Remove Member
+              </button>
             </div>
           </div>
         </div>
@@ -344,10 +433,7 @@ function MembersContent() {
             </p>
 
             <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                setShowAddModal(false);
-              }}
+              onSubmit={handleAddMember}
               className="space-y-4"
             >
               <div>
@@ -356,7 +442,10 @@ function MembersContent() {
                 </label>
                 <input
                   type="text"
+                  value={formName}
+                  onChange={(e) => setFormName(e.target.value)}
                   placeholder="Enter full name"
+                  required
                   className="w-full px-4 py-2.5 rounded-xl border border-navy-100 text-sm text-navy-700 placeholder:text-navy-300 focus:outline-none focus:ring-2 focus:ring-navy-200"
                 />
               </div>
@@ -364,7 +453,11 @@ function MembersContent() {
                 <label className="block text-sm font-medium text-navy-600 mb-1">
                   Team
                 </label>
-                <select className="w-full px-4 py-2.5 rounded-xl border border-navy-100 text-sm text-navy-700 focus:outline-none focus:ring-2 focus:ring-navy-200">
+                <select
+                  value={formTeam}
+                  onChange={(e) => setFormTeam(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-navy-100 text-sm text-navy-700 focus:outline-none focus:ring-2 focus:ring-navy-200"
+                >
                   {teams.map((team) => (
                     <option key={team.id} value={team.id}>
                       {team.name}
@@ -379,6 +472,8 @@ function MembersContent() {
                   </label>
                   <input
                     type="tel"
+                    value={formPhone}
+                    onChange={(e) => setFormPhone(e.target.value)}
                     placeholder="080XXXXXXXX"
                     className="w-full px-4 py-2.5 rounded-xl border border-navy-100 text-sm text-navy-700 placeholder:text-navy-300 focus:outline-none focus:ring-2 focus:ring-navy-200"
                   />
@@ -389,6 +484,8 @@ function MembersContent() {
                   </label>
                   <input
                     type="date"
+                    value={formBirthday}
+                    onChange={(e) => setFormBirthday(e.target.value)}
                     className="w-full px-4 py-2.5 rounded-xl border border-navy-100 text-sm text-navy-700 focus:outline-none focus:ring-2 focus:ring-navy-200"
                   />
                 </div>
@@ -399,6 +496,8 @@ function MembersContent() {
                 </label>
                 <input
                   type="text"
+                  value={formAddress}
+                  onChange={(e) => setFormAddress(e.target.value)}
                   placeholder="Street address"
                   className="w-full px-4 py-2.5 rounded-xl border border-navy-100 text-sm text-navy-700 placeholder:text-navy-300 focus:outline-none focus:ring-2 focus:ring-navy-200"
                 />
@@ -409,15 +508,22 @@ function MembersContent() {
                 </label>
                 <input
                   type="text"
+                  value={formLocation}
+                  onChange={(e) => setFormLocation(e.target.value)}
                   placeholder="e.g. Ibadan North"
                   className="w-full px-4 py-2.5 rounded-xl border border-navy-100 text-sm text-navy-700 placeholder:text-navy-300 focus:outline-none focus:ring-2 focus:ring-navy-200"
                 />
               </div>
               <button
                 type="submit"
-                className="w-full py-2.5 bg-navy-700 hover:bg-navy-800 text-white font-semibold rounded-xl transition-all text-sm"
+                disabled={submitting}
+                className="w-full py-2.5 bg-navy-700 hover:bg-navy-800 text-white font-semibold rounded-xl transition-all text-sm disabled:opacity-70 flex items-center justify-center gap-2"
               >
-                Add Member
+                {submitting ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  "Add Member"
+                )}
               </button>
             </form>
           </div>

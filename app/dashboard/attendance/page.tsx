@@ -1,13 +1,9 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import {
-  teams,
-  members,
-  getTeamMembers,
-  getSundays,
-  attendanceRecords,
-} from "@/lib/mock-data";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { supabase } from "@/lib/supabase";
+import { Team, Member, AttendanceRecord } from "@/lib/types";
+import { getSundays, formatSunday, getInitials } from "@/lib/helpers";
 import TeamIcon from "@/components/TeamIcon";
 import {
   ChevronDown,
@@ -16,72 +12,102 @@ import {
   MessageSquare,
   Save,
   CalendarDays,
+  Loader2,
 } from "lucide-react";
 
 export default function AttendancePage() {
-  const [selectedTeam, setSelectedTeam] = useState(teams[0].id);
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [allMembers, setAllMembers] = useState<Member[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedTeam, setSelectedTeam] = useState("");
   const [selectedSunday, setSelectedSunday] = useState(() => {
-    // Default to most recent past Sunday
     const sundays = getSundays();
-    const today = new Date(2026, 3, 8);
-    const past = sundays.filter((s) => new Date(s) <= today);
+    const today = new Date();
+    const past = sundays.filter((s) => new Date(s + "T00:00:00") <= today);
     return past[past.length - 1] || sundays[0];
   });
 
   const [attendance, setAttendance] = useState<
     Record<string, { present: boolean; reason: string }>
-  >(() => {
-    // Initialize from mock data
-    const init: Record<string, { present: boolean; reason: string }> = {};
-    const teamMembers = getTeamMembers(selectedTeam);
-    for (const member of teamMembers) {
-      const record = attendanceRecords.find(
-        (r) => r.memberId === member.id && r.date === selectedSunday
-      );
-      init[member.id] = {
-        present: record?.present ?? true,
-        reason: record?.reason || "",
-      };
-    }
-    return init;
-  });
-
+  >({});
   const [editingReason, setEditingReason] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const sundays = getSundays();
-  const today = new Date(2026, 3, 8);
+  const today = new Date();
+
+  // Fetch teams + members
+  useEffect(() => {
+    async function fetchData() {
+      const [teamsRes, membersRes] = await Promise.all([
+        supabase.from("teams").select("*"),
+        supabase.from("members").select("*"),
+      ]);
+      const fetchedTeams = teamsRes.data || [];
+      setTeams(fetchedTeams);
+      setAllMembers(membersRes.data || []);
+      if (fetchedTeams.length > 0 && !selectedTeam) {
+        setSelectedTeam(fetchedTeams[0].id);
+      }
+      setLoading(false);
+    }
+    fetchData();
+  }, []);
+
   const teamMembers = useMemo(
-    () => getTeamMembers(selectedTeam),
-    [selectedTeam]
+    () => allMembers.filter((m) => m.team_id === selectedTeam),
+    [allMembers, selectedTeam]
   );
+
   const currentTeam = teams.find((t) => t.id === selectedTeam);
 
-  // Re-initialize attendance when team or sunday changes
-  const reinitAttendance = (teamId: string, sunday: string) => {
-    const init: Record<string, { present: boolean; reason: string }> = {};
-    const tMembers = getTeamMembers(teamId);
-    for (const member of tMembers) {
-      const record = attendanceRecords.find(
-        (r) => r.memberId === member.id && r.date === sunday
-      );
-      init[member.id] = {
-        present: record?.present ?? true,
-        reason: record?.reason || "",
-      };
+  // Load attendance records for selected team + sunday
+  const loadAttendance = useCallback(
+    async (teamId: string, sunday: string) => {
+      const memberIds = allMembers
+        .filter((m) => m.team_id === teamId)
+        .map((m) => m.id);
+
+      if (memberIds.length === 0) {
+        setAttendance({});
+        return;
+      }
+
+      const { data: records } = await supabase
+        .from("attendance_records")
+        .select("*")
+        .in("member_id", memberIds)
+        .eq("sunday", sunday);
+
+      const init: Record<string, { present: boolean; reason: string }> = {};
+      const tMembers = allMembers.filter((m) => m.team_id === teamId);
+      for (const member of tMembers) {
+        const record = records?.find((r: AttendanceRecord) => r.member_id === member.id);
+        init[member.id] = {
+          present: record?.present ?? true,
+          reason: record?.reason || "",
+        };
+      }
+      setAttendance(init);
+    },
+    [allMembers]
+  );
+
+  // Reload attendance on team/sunday change
+  useEffect(() => {
+    if (selectedTeam && allMembers.length > 0) {
+      loadAttendance(selectedTeam, selectedSunday);
     }
-    setAttendance(init);
-  };
+  }, [selectedTeam, selectedSunday, allMembers, loadAttendance]);
 
   const handleTeamChange = (teamId: string) => {
     setSelectedTeam(teamId);
-    reinitAttendance(teamId, selectedSunday);
     setSaved(false);
   };
 
   const handleSundayChange = (sunday: string) => {
     setSelectedSunday(sunday);
-    reinitAttendance(selectedTeam, sunday);
     setSaved(false);
   };
 
@@ -105,22 +131,39 @@ export default function AttendancePage() {
     setSaved(false);
   };
 
+  const handleSave = async () => {
+    setSaving(true);
+    const upserts = Object.entries(attendance).map(([memberId, data]) => ({
+      member_id: memberId,
+      sunday: selectedSunday,
+      present: data.present,
+      reason: data.present ? null : data.reason || null,
+    }));
+
+    const { error } = await supabase
+      .from("attendance_records")
+      .upsert(upserts, { onConflict: "member_id,sunday" });
+
+    if (!error) {
+      setSaved(true);
+    }
+    setSaving(false);
+  };
+
   const presentCount = Object.values(attendance).filter(
     (a) => a.present
   ).length;
   const absentCount = teamMembers.length - presentCount;
 
-  const formatSunday = (dateStr: string) => {
-    const d = new Date(dateStr);
-    return d.toLocaleDateString("en-US", {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
+  const isFuture = (dateStr: string) => new Date(dateStr + "T00:00:00") > today;
 
-  const isFuture = (dateStr: string) => new Date(dateStr) > today;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-6 h-6 text-navy-400 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-275 mx-auto">
@@ -135,14 +178,17 @@ export default function AttendancePage() {
           </p>
         </div>
         <button
-          onClick={() => setSaved(true)}
+          onClick={handleSave}
+          disabled={saving}
           className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all ${
             saved
               ? "bg-accent-green text-white"
               : "bg-navy-700 hover:bg-navy-800 text-white"
-          }`}
+          } disabled:opacity-70`}
         >
-          {saved ? (
+          {saving ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : saved ? (
             <>
               <Check className="w-4 h-4" />
               Saved
@@ -273,10 +319,7 @@ export default function AttendancePage() {
                   <td className="px-4 lg:px-6 py-3.5">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 bg-navy-100 rounded-full flex items-center justify-center text-navy-600 text-xs font-semibold">
-                        {member.name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")}
+                        {getInitials(member.name)}
                       </div>
                       <div>
                         <p className="text-sm font-semibold text-navy-700">

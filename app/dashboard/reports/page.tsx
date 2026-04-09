@@ -1,12 +1,9 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import {
-  teams,
-  getMonthlyReport,
-  getTeamMembers,
-  attendanceRecords,
-} from "@/lib/mock-data";
+import { useState, useEffect, useMemo } from "react";
+import { supabase } from "@/lib/supabase";
+import { Team, Member, AttendanceRecord } from "@/lib/types";
+import { getSundays } from "@/lib/helpers";
 import TeamIcon from "@/components/TeamIcon";
 import {
   ChevronDown,
@@ -16,6 +13,7 @@ import {
   CalendarCheck,
   AlertCircle,
   BarChart3,
+  Loader2,
 } from "lucide-react";
 
 const months = [
@@ -31,8 +29,27 @@ const months = [
 ];
 
 export default function ReportsPage() {
-  const [selectedMonth, setSelectedMonth] = useState(4); // April
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
+  const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedMonth, setSelectedMonth] = useState(4);
   const [selectedTeam, setSelectedTeam] = useState<string>("all");
+
+  useEffect(() => {
+    async function fetchData() {
+      const [teamsRes, membersRes, attendanceRes] = await Promise.all([
+        supabase.from("teams").select("*"),
+        supabase.from("members").select("*"),
+        supabase.from("attendance_records").select("*"),
+      ]);
+      setTeams(teamsRes.data || []);
+      setMembers(membersRes.data || []);
+      setAttendance(attendanceRes.data || []);
+      setLoading(false);
+    }
+    fetchData();
+  }, []);
 
   const monthLabel =
     months.find((m) => m.value === selectedMonth)?.label || "";
@@ -40,14 +57,49 @@ export default function ReportsPage() {
   const teamsToShow =
     selectedTeam === "all" ? teams : teams.filter((t) => t.id === selectedTeam);
 
+  const getTeamMembers = (teamId: string) =>
+    members.filter((m) => m.team_id === teamId);
+
+  const getMonthlyReport = (teamId: string, month: number, year: number) => {
+    const teamMemberList = getTeamMembers(teamId);
+    const teamMemberIds = new Set(teamMemberList.map((m) => m.id));
+
+    const sundays = getSundays().filter((s) => {
+      const d = new Date(s + "T00:00:00");
+      return d.getMonth() + 1 === month && d.getFullYear() === year;
+    });
+
+    const breakdown = sundays.map((sunday) => {
+      const dayRecords = attendance.filter(
+        (r) => r.sunday === sunday && teamMemberIds.has(r.member_id)
+      );
+      const present = dayRecords.filter((r) => r.present).length;
+      return { date: sunday, present, absent: dayRecords.length - present };
+    });
+
+    const totalPresent = breakdown.reduce((sum, b) => sum + b.present, 0);
+    const totalRecords = breakdown.reduce(
+      (sum, b) => sum + b.present + b.absent,
+      0
+    );
+
+    return {
+      totalMembers: teamMemberList.length,
+      avgAttendance:
+        totalRecords > 0
+          ? Math.round((totalPresent / totalRecords) * 100)
+          : 0,
+      sundayBreakdown: breakdown,
+    };
+  };
+
   const reports = useMemo(() => {
     return teamsToShow.map((team) => ({
       team,
       report: getMonthlyReport(team.id, selectedMonth, 2026),
     }));
-  }, [teamsToShow, selectedMonth]);
+  }, [teamsToShow, selectedMonth, attendance, members]);
 
-  // Overall stats across all teams for the month
   const overallStats = useMemo(() => {
     const allReports = teams.map((t) =>
       getMonthlyReport(t.id, selectedMonth, 2026)
@@ -64,7 +116,6 @@ export default function ReportsPage() {
           )
         : 0;
 
-    // Find best and worst performing teams
     const teamPerformance = teams
       .map((t) => ({
         team: t,
@@ -78,9 +129,8 @@ export default function ReportsPage() {
       bestTeam: teamPerformance[0],
       worstTeam: teamPerformance[teamPerformance.length - 1],
     };
-  }, [selectedMonth]);
+  }, [selectedMonth, teams, attendance, members]);
 
-  // Find most absent members across teams for the month
   const absentees = useMemo(() => {
     const memberAbsences: Record<
       string,
@@ -90,16 +140,14 @@ export default function ReportsPage() {
     for (const team of teamsToShow) {
       const teamMemberList = getTeamMembers(team.id);
       for (const member of teamMemberList) {
-        const records = attendanceRecords.filter(
-          (r) => {
-            const d = new Date(r.date);
-            return (
-              r.memberId === member.id &&
-              d.getMonth() + 1 === selectedMonth &&
-              d.getFullYear() === 2026
-            );
-          }
-        );
+        const records = attendance.filter((r) => {
+          const d = new Date(r.sunday + "T00:00:00");
+          return (
+            r.member_id === member.id &&
+            d.getMonth() + 1 === selectedMonth &&
+            d.getFullYear() === 2026
+          );
+        });
         const absences = records.filter((r) => !r.present).length;
         if (absences > 0) {
           memberAbsences[member.id] = {
@@ -116,7 +164,15 @@ export default function ReportsPage() {
       .sort((a, b) => b[1].absences - a[1].absences)
       .slice(0, 5)
       .map(([id, data]) => ({ id, ...data }));
-  }, [teamsToShow, selectedMonth]);
+  }, [teamsToShow, selectedMonth, attendance, members]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-6 h-6 text-navy-400 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-350 mx-auto">
@@ -340,10 +396,7 @@ export default function ReportsPage() {
                     className="flex items-center gap-3 p-3 bg-navy-50 rounded-xl"
                   >
                     <div className="w-8 h-8 bg-navy-200 rounded-full flex items-center justify-center text-navy-600 text-xs font-semibold shrink-0">
-                      {member.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")}
+                      {member.name.split(" ").map((n: string) => n[0]).join("")}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-navy-700 truncate">
