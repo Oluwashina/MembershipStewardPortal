@@ -10,7 +10,10 @@ export function getSundays(): string[] {
   }
 
   while (current <= end) {
-    sundays.push(current.toISOString().split("T")[0]);
+    const y = current.getFullYear();
+    const m = String(current.getMonth() + 1).padStart(2, "0");
+    const d = String(current.getDate()).padStart(2, "0");
+    sundays.push(`${y}-${m}-${d}`);
     current.setDate(current.getDate() + 7);
   }
 
@@ -32,4 +35,20 @@ export function getInitials(name: string): string {
     .split(" ")
     .map((n) => n[0])
     .join("");
+}
+
+export function downloadCSV(filename: string, headers: string[], rows: string[][]) {
+  const escape = (v: string) => `"${v.replace(/"/g, '""')}"`;
+  const csv = [
+    headers.map(escape).join(","),
+    ...rows.map((r) => r.map(escape).join(",")),
+  ].join("\n");
+
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
 }

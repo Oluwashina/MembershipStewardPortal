@@ -177,29 +177,31 @@ export default function AttendancePage() {
             Record Sunday attendance for each team
           </p>
         </div>
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all ${
-            saved
-              ? "bg-accent-green text-white"
-              : "bg-navy-700 hover:bg-navy-800 text-white"
-          } disabled:opacity-70`}
-        >
-          {saving ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : saved ? (
-            <>
-              <Check className="w-4 h-4" />
-              Saved
-            </>
-          ) : (
-            <>
-              <Save className="w-4 h-4" />
-              Save Attendance
-            </>
-          )}
-        </button>
+        {teamMembers.length > 0 && (
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all ${
+              saved
+                ? "bg-accent-green text-white"
+                : "bg-navy-700 hover:bg-navy-800 text-white"
+            } disabled:opacity-70`}
+          >
+            {saving ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : saved ? (
+              <>
+                <Check className="w-4 h-4" />
+                Saved
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4" />
+                Save Attendance
+              </>
+            )}
+          </button>
+        )}
       </div>
 
       {/* Selectors */}
@@ -288,6 +290,13 @@ export default function AttendancePage() {
       </div>
 
       {/* Attendance list */}
+      {teamMembers.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-navy-100/60 p-12 text-center">
+          <CalendarDays className="w-12 h-12 text-navy-200 mx-auto mb-3" />
+          <p className="text-sm font-semibold text-navy-500 mb-1">No members in this team</p>
+          <p className="text-xs text-navy-400">Add members to this team from the Team Members page to start tracking attendance.</p>
+        </div>
+      ) : (
       <div className="bg-white rounded-2xl border border-navy-100/60 overflow-hidden">
         <div className="overflow-x-auto">
         <table className="w-full min-w-[500px]">
@@ -388,6 +397,7 @@ export default function AttendancePage() {
         </table>
         </div>
       </div>
+      )}
     </div>
   );
 }
