@@ -16,6 +16,7 @@ export interface Member {
   address: string;
   location: string;
   birthday: string;
+  email: string;
 }
 
 export interface AttendanceRecord {

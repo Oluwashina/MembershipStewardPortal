@@ -17,6 +17,9 @@ import {
   User,
   Loader2,
   Trash2,
+  Edit2,
+  Mail,
+  Check,
 } from "lucide-react";
 
 export default function MembersPage() {
@@ -40,6 +43,7 @@ function MembersContent() {
   const [selectedMember, setSelectedMember] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   // Add member form state
   const [formName, setFormName] = useState("");
@@ -48,6 +52,7 @@ function MembersContent() {
   const [formBirthday, setFormBirthday] = useState("");
   const [formAddress, setFormAddress] = useState("");
   const [formLocation, setFormLocation] = useState("");
+  const [formEmail, setFormEmail] = useState("");
 
   const fetchData = useCallback(async () => {
     const [teamsRes, membersRes] = await Promise.all([
@@ -104,6 +109,7 @@ function MembersContent() {
       birthday: formBirthday,
       address: formAddress.trim(),
       location: formLocation.trim(),
+      email: formEmail.trim(),
     });
 
     if (!error) {
@@ -113,6 +119,51 @@ function MembersContent() {
       setFormBirthday("");
       setFormAddress("");
       setFormLocation("");
+      setFormEmail("");
+      await fetchData();
+    }
+    setSubmitting(false);
+  };
+
+  const handleEditMember = () => {
+    if (activeMember) {
+      setFormName(activeMember.name);
+      setFormTeam(activeMember.team_id);
+      setFormPhone(activeMember.phone);
+      setFormBirthday(activeMember.birthday);
+      setFormAddress(activeMember.address);
+      setFormLocation(activeMember.location);
+      setFormEmail(activeMember.email || "");
+      setIsEditing(true);
+    }
+  };
+
+  const handleUpdateMember = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeMember || !formName.trim()) return;
+    setSubmitting(true);
+
+    const { error } = await supabase
+      .from("members")
+      .update({
+        name: formName.trim(),
+        team_id: formTeam,
+        phone: formPhone.trim(),
+        birthday: formBirthday,
+        address: formAddress.trim(),
+        location: formLocation.trim(),
+        email: formEmail.trim(),
+      })
+      .eq("id", activeMember.id);
+
+    if (!error) {
+      setIsEditing(false);
+      setFormName("");
+      setFormPhone("");
+      setFormBirthday("");
+      setFormAddress("");
+      setFormLocation("");
+      setFormEmail("");
       await fetchData();
     }
     setSubmitting(false);
@@ -328,83 +379,208 @@ function MembersContent() {
         <div className="fixed inset-0 z-50 flex justify-end">
           <div
             className="absolute inset-0 bg-navy-900/30 backdrop-blur-sm"
-            onClick={() => setSelectedMember(null)}
+            onClick={() => {
+              setSelectedMember(null);
+              setIsEditing(false);
+            }}
           />
           <div className="relative w-full sm:w-105 bg-white h-full shadow-2xl overflow-auto">
             <div className="p-6">
               <button
-                onClick={() => setSelectedMember(null)}
+                onClick={() => {
+                  setSelectedMember(null);
+                  setIsEditing(false);
+                }}
                 className="absolute top-4 right-4 w-8 h-8 rounded-lg bg-navy-50 flex items-center justify-center text-navy-400 hover:bg-navy-100 transition-all"
               >
                 <X className="w-4 h-4" />
               </button>
 
-              <div className="text-center mb-6">
-                <div className="w-16 h-16 bg-navy-700 rounded-full flex items-center justify-center text-white text-xl font-bold mx-auto mb-3">
-                  {getInitials(activeMember.name)}
-                </div>
-                <h2 className="text-lg font-bold text-navy-800">
-                  {activeMember.name}
-                </h2>
-                <p className="text-sm text-navy-400">
-                  {teams.find((t) => t.id === activeMember.team_id)?.name}
-                </p>
-              </div>
+              {!isEditing ? (
+                // View mode
+                <>
+                  <div className="text-center mb-6">
+                    <div className="w-16 h-16 bg-navy-700 rounded-full flex items-center justify-center text-white text-xl font-bold mx-auto mb-3">
+                      {getInitials(activeMember.name)}
+                    </div>
+                    <h2 className="text-lg font-bold text-navy-800">
+                      {activeMember.name}
+                    </h2>
+                    <p className="text-sm text-navy-400">
+                      {teams.find((t) => t.id === activeMember.team_id)?.name}
+                    </p>
+                  </div>
 
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 p-3 bg-navy-50 rounded-xl">
-                  <Phone className="w-4 h-4 text-navy-400" />
-                  <div>
-                    <p className="text-xs text-navy-400">Phone</p>
-                    <p className="text-sm font-medium text-navy-700">
-                      {activeMember.phone}
-                    </p>
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3 p-3 bg-navy-50 rounded-xl">
+                      <Mail className="w-4 h-4 text-navy-400" />
+                      <div>
+                        <p className="text-xs text-navy-400">Email</p>
+                        <p className="text-sm font-medium text-navy-700">
+                          {activeMember.email || "Not provided"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 bg-navy-50 rounded-xl">
+                      <Phone className="w-4 h-4 text-navy-400" />
+                      <div>
+                        <p className="text-xs text-navy-400">Phone</p>
+                        <p className="text-sm font-medium text-navy-700">
+                          {activeMember.phone}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 bg-navy-50 rounded-xl">
+                      <MapPin className="w-4 h-4 text-navy-400 shrink-0" />
+                      <div>
+                        <p className="text-xs text-navy-400">Address</p>
+                        <p className="text-sm font-medium text-navy-700">
+                          {activeMember.address}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 bg-navy-50 rounded-xl">
+                      <MapPin className="w-4 h-4 text-navy-400" />
+                      <div>
+                        <p className="text-xs text-navy-400">Location</p>
+                        <p className="text-sm font-medium text-navy-700">
+                          {activeMember.location}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 bg-navy-50 rounded-xl">
+                      <Cake className="w-4 h-4 text-navy-400" />
+                      <div>
+                        <p className="text-xs text-navy-400">Birthday</p>
+                        <p className="text-sm font-medium text-navy-700">
+                          {new Date(activeMember.birthday + "T00:00:00").toLocaleDateString(
+                            "en-US",
+                            { month: "long", day: "numeric", year: "numeric" }
+                          )}
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-3 p-3 bg-navy-50 rounded-xl">
-                  <MapPin className="w-4 h-4 text-navy-400 shrink-0" />
-                  <div>
-                    <p className="text-xs text-navy-400">Address</p>
-                    <p className="text-sm font-medium text-navy-700">
-                      {activeMember.address}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 p-3 bg-navy-50 rounded-xl">
-                  <MapPin className="w-4 h-4 text-navy-400" />
-                  <div>
-                    <p className="text-xs text-navy-400">Location</p>
-                    <p className="text-sm font-medium text-navy-700">
-                      {activeMember.location}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 p-3 bg-navy-50 rounded-xl">
-                  <Cake className="w-4 h-4 text-navy-400" />
-                  <div>
-                    <p className="text-xs text-navy-400">Birthday</p>
-                    <p className="text-sm font-medium text-navy-700">
-                      {new Date(activeMember.birthday + "T00:00:00").toLocaleDateString(
-                        "en-US",
-                        { month: "long", day: "numeric", year: "numeric" }
+
+                  <div className="flex gap-3 mt-6">
+                    <button
+                      onClick={handleEditMember}
+                      className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-navy-100 text-navy-700 text-sm font-medium hover:bg-navy-200 transition-all"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDeleteMember(activeMember.id)}
+                      disabled={deleting}
+                      className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-red-200 text-red-500 text-sm font-medium hover:bg-red-50 transition-all disabled:opacity-50"
+                    >
+                      {deleting ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="w-4 h-4" />
                       )}
-                    </p>
+                      Remove
+                    </button>
                   </div>
-                </div>
-              </div>
-
-              <button
-                onClick={() => handleDeleteMember(activeMember.id)}
-                disabled={deleting}
-                className="mt-6 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-red-200 text-red-500 text-sm font-medium hover:bg-red-50 transition-all disabled:opacity-50"
-              >
-                {deleting ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Trash2 className="w-4 h-4" />
-                )}
-                Remove Member
-              </button>
+                </>
+              ) : (
+                // Edit mode
+                <form onSubmit={handleUpdateMember} className="space-y-4">
+                  <h2 className="text-lg font-bold text-navy-800 mb-4">
+                    Edit Member
+                  </h2>
+                  <div>
+                    <label className="block text-sm font-medium text-navy-600 mb-1">
+                      Full Name
+                    </label>
+                    <input
+                      type="text"
+                      value={formName}
+                      onChange={(e) => setFormName(e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-xl border border-navy-100 text-sm text-navy-700 focus:outline-none focus:ring-2 focus:ring-navy-200"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-navy-600 mb-1">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      value={formEmail}
+                      onChange={(e) => setFormEmail(e.target.value)}
+                      placeholder="user@example.com"
+                      className="w-full px-4 py-2.5 rounded-xl border border-navy-100 text-sm text-navy-700 placeholder:text-navy-300 focus:outline-none focus:ring-2 focus:ring-navy-200"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-navy-600 mb-1">
+                      Phone
+                    </label>
+                    <input
+                      type="tel"
+                      value={formPhone}
+                      onChange={(e) => setFormPhone(e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-xl border border-navy-100 text-sm text-navy-700 focus:outline-none focus:ring-2 focus:ring-navy-200"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-navy-600 mb-1">
+                      Birthday
+                    </label>
+                    <input
+                      type="date"
+                      value={formBirthday}
+                      onChange={(e) => setFormBirthday(e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-xl border border-navy-100 text-sm text-navy-700 focus:outline-none focus:ring-2 focus:ring-navy-200"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-navy-600 mb-1">
+                      Address
+                    </label>
+                    <input
+                      type="text"
+                      value={formAddress}
+                      onChange={(e) => setFormAddress(e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-xl border border-navy-100 text-sm text-navy-700 focus:outline-none focus:ring-2 focus:ring-navy-200"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-navy-600 mb-1">
+                      Location
+                    </label>
+                    <input
+                      type="text"
+                      value={formLocation}
+                      onChange={(e) => setFormLocation(e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-xl border border-navy-100 text-sm text-navy-700 focus:outline-none focus:ring-2 focus:ring-navy-200"
+                    />
+                  </div>
+                  <div className="flex gap-3 pt-4">
+                    <button
+                      type="submit"
+                      disabled={submitting}
+                      className="flex-1 py-2.5 bg-navy-700 hover:bg-navy-800 text-white font-semibold rounded-xl transition-all text-sm disabled:opacity-70 flex items-center justify-center gap-2"
+                    >
+                      {submitting ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Check className="w-4 h-4" />
+                      )}
+                      Save Changes
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsEditing(false)}
+                      className="flex-1 py-2.5 border border-navy-200 text-navy-700 font-semibold rounded-xl hover:bg-navy-50 transition-all text-sm"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              )}
             </div>
           </div>
         </div>
@@ -464,6 +640,18 @@ function MembersContent() {
                     </option>
                   ))}
                 </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-navy-600 mb-1">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={formEmail}
+                  onChange={(e) => setFormEmail(e.target.value)}
+                  placeholder="user@example.com"
+                  className="w-full px-4 py-2.5 rounded-xl border border-navy-100 text-sm text-navy-700 placeholder:text-navy-300 focus:outline-none focus:ring-2 focus:ring-navy-200"
+                />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
