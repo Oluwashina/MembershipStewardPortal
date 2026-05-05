@@ -38,7 +38,7 @@ export default function ReportsPage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedMonth, setSelectedMonth] = useState(4);
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedTeam, setSelectedTeam] = useState<string>("all");
 
   useEffect(() => {
